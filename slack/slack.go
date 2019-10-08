@@ -41,30 +41,6 @@ func responseHandler(target string, message string, sender *bot.User) {
 	}
 }
 
-func responseHandlerV2(om bot.OutgoingMessage) {
-	message, params := messageFilter(om.Message, om.Sender)
-	if pmp, ok := om.ProtoParams.(*slack.PostMessageParameters); ok {
-		params = *pmp
-	}
-	_, _, err := api.PostMessage(
-		om.Target,
-		slack.MsgOptionPostMessageParameters(params),
-		slack.MsgOptionText(message, false),
-	)
-	if err != nil {
-		fmt.Printf("Error sending a slack message: %s\n", err.Error())
-	}
-}
-
-// AddReactionToMessage allows you to add a reaction, to a message.
-func AddReactionToMessage(msgid, channel string, reaction string) error {
-	toReact := slack.ItemRef{
-		Timestamp: msgid,
-		Channel:   channel,
-	}
-
-	return api.AddReaction(reaction, toReact)
-}
 
 // RemoveReactionFromMessage allows you to remove a reaction, from a message.
 func RemoveReactionFromMessage(msgid, channel string, reaction string) error {
@@ -92,6 +68,31 @@ func FindUserBySlackID(userID string) *bot.User {
 		IsBot:    slackUser.IsBot}
 }
 
+
+func responseHandlerV2(om bot.OutgoingMessage) {
+	message, params := messageFilter(om.Message, om.Sender)
+	if pmp, ok := om.ProtoParams.(*slack.PostMessageParameters); ok {
+		params = *pmp
+	}
+	_, _, err := api.PostMessage(
+		om.Target,
+		slack.MsgOptionPostMessageParameters(params),
+		slack.MsgOptionText(message, false),
+	)
+	if err != nil {
+		fmt.Printf("Error sending a slack message: %s\n", err.Error())
+	}
+}
+
+// AddReactionToMessage allows you to add a reaction, to a message.
+func AddReactionToMessage(msgid, channel string, reaction string) error {
+	toReact := slack.ItemRef{
+		Timestamp: msgid,
+		Channel:   channel,
+	}
+
+	return api.AddReaction(reaction, toReact)
+}
 // Extracts user information from slack API
 func extractUser(event *slack.MessageEvent) *bot.User {
 	var isBot bool
