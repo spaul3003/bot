@@ -111,31 +111,6 @@ func New(h *Handlers, bc *Config) *Bot {
 	return b
 }
 
-func (b *Bot) startMessageStreams() {
-	for _, v := range messageStreamConfigs {
-
-		go func(b *Bot, config *messageStreamConfig) {
-			msMap.Lock()
-			ms := &MessageStream{
-				Data: make(chan MessageStreamMessage),
-				Done: make(chan bool),
-			}
-			var err = config.msgFunc(ms)
-			if err != nil {
-				b.errored("MessageStream "+config.streamName+" failed ", err)
-			}
-			msKey := messageStreamKey{
-				Protocol:   b.Protocol,
-				Server:     b.Server,
-				StreamName: config.streamName,
-			}
-			// thread safe write
-			msMap.messageStreams[msKey] = ms
-			msMap.Unlock()
-			b.handleMessageStream(config.streamName, ms)
-		}(b, v)
-	}
-}
 
 func (b *Bot) startPeriodicCommands() {
 	for _, config := range periodicCommands {
@@ -173,6 +148,32 @@ func (b *Bot) startPeriodicCommands() {
 	}
 	if len(b.cron.Entries()) > 0 {
 		b.cron.Start()
+	}
+}
+
+func (b *Bot) startMessageStreams() {
+	for _, v := range messageStreamConfigs {
+
+		go func(b *Bot, config *messageStreamConfig) {
+			msMap.Lock()
+			ms := &MessageStream{
+				Data: make(chan MessageStreamMessage),
+				Done: make(chan bool),
+			}
+			var err = config.msgFunc(ms)
+			if err != nil {
+				b.errored("MessageStream "+config.streamName+" failed ", err)
+			}
+			msKey := messageStreamKey{
+				Protocol:   b.Protocol,
+				Server:     b.Server,
+				StreamName: config.streamName,
+			}
+			// thread safe write
+			msMap.messageStreams[msKey] = ms
+			msMap.Unlock()
+			b.handleMessageStream(config.streamName, ms)
+		}(b, v)
 	}
 }
 
@@ -265,7 +266,7 @@ func (b *Bot) processMessages() {
 }
 
 // Close will shut down the message sending capabilities of this bot. Call
-// this when you are done using the bot.
+// this when you are done using the bot. help this one
 func (b *Bot) Close() {
 	close(b.done)
 }
